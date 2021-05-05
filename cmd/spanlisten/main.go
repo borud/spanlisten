@@ -8,6 +8,9 @@ import (
 
 	"github.com/lab5e/go-spanapi/v4"
 	"github.com/lab5e/go-spanapi/v4/apitools"
+	"google.golang.org/protobuf/proto"
+
+	"github.com/borud/spanlisten/pkg/apipb"
 )
 
 var (
@@ -56,7 +59,12 @@ func readDataStream(ds apitools.DataStream) {
 			log.Fatalf("Unable to decode payload: %v", err)
 		}
 
-		log.Printf("%s %s", *msg.Device.DeviceId, *msg.Payload)
-		log.Printf("hex %x", bytePayload)
+		// decode bytePayload as protobuffer
+		var pb apipb.CarrierModuleMeasurements
+		err = proto.Unmarshal(bytePayload, &pb)
+		if err != nil {
+			log.Fatalf("Unable to unmarshal protobuffer: %v", err)
+		}
+		log.Printf("protobuffer %+v", &pb)
 	}
 }

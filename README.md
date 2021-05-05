@@ -114,3 +114,19 @@ Remember to run `go mod tidy`.
 gen:
 	@buf generate
 ```
+
+## Unmarshal the protobuffer
+
+Add import `"google.golang.org/protobuf/proto"`
+
+Then decode the protobuf
+
+```go
+// decode bytePayload as protobuffer
+var pb apipb.CarrierModuleMeasurements
+err = proto.Unmarshal(bytePayload, &pb)
+if err != nil {
+	log.Fatalf("Unable to unmarshal protobuffer: %v", err)
+}
+log.Printf("protobuffer %+v", &pb)
+```
