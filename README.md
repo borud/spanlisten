@@ -31,4 +31,54 @@ test:
 
 ```
 
-Add `README.md` and `.gitignore` and perform first commit.
+## Push first commit
+
+- Add `README.md` and `.gitignore` 
+- run `git init`
+- create git repository
+
+# Add dependency to Span
+
+Add dependency to Span library
+
+    "github.com/lab5e/go-spanapi/v4"
+	"github.com/lab5e/go-spanapi/v4/apitools"
+
+## Set up listening
+
+```go
+config := spanapi.NewConfiguration()
+config.Debug = true
+ctx, _ := apitools.ContextWithAuth(*token, 1*time.Hour)
+ds, err := apitools.NewCollectionDataStream(ctx, config, *collectionID)
+
+if err != nil {
+	log.Fatalf("Unable to open CollectionDataStream: %v", err)
+}
+
+readDataStream(ds)
+```
+
+## Iterate over the incoming stream
+
+```go
+for {
+	msg, err := ds.Recv()
+	if err != nil {
+		log.Fatalf("Error reading message: %v", err)
+	}
+	// We only care about messages containing data
+	if *msg.Type != "data" {
+		continue
+	}
+
+	// base64 decode the payload to a string
+	bytePayload, err := base64.StdEncoding.DecodeString(*msg.Payload)
+	if err != nil {
+		log.Fatalf("Unable to decode payload: %v", err)
+	}
+
+	log.Printf("%s %s", *msg.Device.DeviceId, *msg.Payload)
+	log.Printf("hex %x", bytePayload)
+}
+```
