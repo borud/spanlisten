@@ -24,4 +24,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to start SpanListener: %v", err)
 	}
+
+	for m := range spanListener.Measurements() {
+		log.Printf("measurement: %+v", m)
+	}
 }

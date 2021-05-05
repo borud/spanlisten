@@ -14,15 +14,17 @@ import (
 
 // SpanListener listens to a given collection on Span
 type SpanListener struct {
-	Token        string
-	CollectionID string
+	Token         string
+	CollectionID  string
+	measurementCh chan *apipb.CarrierModuleMeasurements
 }
 
 // New creates a new SpanListener instance
 func New(token string, collectionID string) *SpanListener {
 	return &SpanListener{
-		Token:        token,
-		CollectionID: collectionID,
+		Token:         token,
+		CollectionID:  collectionID,
+		measurementCh: make(chan *apipb.CarrierModuleMeasurements),
 	}
 }
 
@@ -41,6 +43,11 @@ func (s *SpanListener) Start() error {
 	go s.readDataStream(ds)
 
 	return nil
+}
+
+// Measurements returns a chan apipb.CarrierModuleMeasurements
+func (s *SpanListener) Measurements() <-chan *apipb.CarrierModuleMeasurements {
+	return s.measurementCh
 }
 
 func (s *SpanListener) readDataStream(ds apitools.DataStream) {
@@ -71,5 +78,7 @@ func (s *SpanListener) readDataStream(ds apitools.DataStream) {
 			log.Fatalf("unable to unmarshal protobuffer: %v", err)
 		}
 		log.Printf("protobuffer %+v", &pb)
+
+		s.measurementCh <- &pb
 	}
 }

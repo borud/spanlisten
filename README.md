@@ -210,3 +210,38 @@ func (s *SpanListener) readDataStream(ds apitools.DataStream) {
 	}
 }
 ```
+
+## Make use of channels
+
+Add a channel to the `SpanListener` type
+
+```go
+type SpanListener struct {
+	Token         string
+	CollectionID  string
+	measurementCh chan *apipb.CarrierModuleMeasurements
+}
+```
+
+and make sure we create a channel in `New()`:
+
+```go
+measurementCh: make(chan *apipb.CarrierModuleMeasurements),
+```
+
+Then output the `pb` to that channel, noting why we have to use a pointer
+
+```go
+s.measurementCh <- &pb
+````
+
+Then we make a function that returns a reference to the channel
+
+```go
+// Measurements returns a chan apipb.CarrierModuleMeasurements
+func (s *SpanListener) Measurements() <-chan *apipb.CarrierModuleMeasurements {
+	return s.measurementCh
+}
+```
+
+Talk a bit about channel length and about sizing channels.
