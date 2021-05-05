@@ -1,0 +1,86 @@
+syntax = "proto3";
+package apipb;
+
+option go_package = "pkg/apipb";
+
+// First stab at protobuffer messate for sensor readings.  Since the
+// smallest type we have is int32 this is used in place of uint8 and
+// uint16.  We need to test that the varint encoding actually manages
+// to compress this down to fewer bits since we have a hard limit
+// somewhere around 60 bytes.
+//
+// Note that all of the measurement values are optional and when a
+// field is omitted the resulting byte count will be lower.  This
+// gives us two things to consider if run up against the packet size limit:  1) we can send multiple packets per sample, 
+//
+// TODO(borud,hansj): add units to all values
+// TODO(borud,hansj): it may be a good idea to squash the resolution for some values
+// TODO(borud): check and document merge semantics for multi-packet measurements.
+//
+message CarrierModuleMeasurements {
+    // Measurement ID is used to signal which measurements are part of
+    // the same measurement if we send multiple packets for the same
+    // measurement.  The resulting measurement is the combination of
+    // both packets (to be documented).
+    uint32 measurement_id = 1;
+    
+    // Node id in the mesh network
+    uint32 node_id = 2;
+
+    // Contains new_data, gasm_valid & heat_stab
+    uint32 status = 3;
+    
+    // The index of the heater profile used
+    uint32 bme680_gas_index = 4;
+
+    // Measurement index to track order
+    uint32 bme680_meas_index = 5;
+
+    // Temperature in degree celsius x100
+    int32 bme680_temperature = 6;
+
+    // Pressure in Pascal
+    uint32 bme680_pressure = 7;
+
+    // Humidity in % relative humidity x1000
+    uint32 bme680_humidity = 8;
+
+    // Gas resistance in Ohms
+    uint32 bme680_gas_resistance = 9;
+
+    // Gyro and accelerometer values.  For now we just put them hered
+    // to see what it takes to report them, but it is fair to assume
+    // that the IMU will have some configurable limits and the
+    // reporting is based on events (and thus can be encoded in far
+    // fewer bits).
+    int32 gyro_x = 10;
+    int32 gyro_y = 11;
+    int32 gyro_z = 12;
+    int32 acceleration_x = 13;
+    int32 acceleration_y = 14;
+    int32 acceleration_z = 15;
+
+    // Light sensor produces a float value.  This can probably be
+    // remapped to an integer value to give protobuf a chance to
+    // compress it.
+    float light = 16;
+
+    // Sound level is probably also going to be based on a small
+    // number of level ranges.
+    float sound_level = 17;
+
+    // Static air quality index as calculated by the Bosch BSEC library
+    float iaq_index = 18;
+
+    // PIR motion detection
+    bool motion_detected = 19;
+
+    // Detecor socket ID can be associated with room
+    bytes detector_socket_id = 20;
+
+    // Detector ID
+    bytes detector_id = 21;
+
+    // Static IAQ accuracy
+    uint32 iaq_accuracy = 22;
+};

@@ -82,3 +82,35 @@ for {
 	log.Printf("hex %x", bytePayload)
 }
 ```
+# Protobuffer
+
+Create `buf.yaml`
+
+```yaml
+version: v1beta1
+build:
+  roots:
+    - proto
+```
+
+and `buf.gen.yaml`
+
+```yaml
+version: v1beta1
+plugins:
+  - name: go
+    out: pkg/apipb
+    opt: paths=source_relative
+```
+
+Then run `buf generate` and observe that `pkg/apipb` is created.
+
+Add `gen` rule to `Makefile`
+
+Remember to run `go mod tidy`.
+
+```Makefile
+
+gen:
+	@buf generate
+```

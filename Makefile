@@ -1,9 +1,8 @@
-all: test lint vet build
+all: gen test lint vet build
 
 build: spanlisten
 
 spanlisten:
-	@go mod tidy
 	@cd cmd/spanlisten && go build -o ../../bin/spanlisten
 
 lint:
@@ -14,3 +13,6 @@ vet:
 
 test:
 	@go test ./...
+
+gen:
+	@buf generate
