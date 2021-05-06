@@ -1,9 +1,11 @@
 package spanlistener
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/borud/spanlisten/pkg/apipb"
@@ -14,9 +16,12 @@ import (
 
 // SpanListener listens to a given collection on Span
 type SpanListener struct {
-	Token         string
-	CollectionID  string
-	measurementCh chan *apipb.CarrierModuleMeasurements
+	Token            string
+	CollectionID     string
+	measurementCh    chan *apipb.CarrierModuleMeasurements
+	ctx              context.Context
+	done             context.CancelFunc
+	shutdownComplete sync.WaitGroup
 }
 
 // New creates a new SpanListener instance
@@ -33,8 +38,8 @@ func (s *SpanListener) Start() error {
 	config := spanapi.NewConfiguration()
 	config.Debug = true
 
-	ctx, _ := apitools.ContextWithAuth(s.Token, 1*time.Hour)
-	ds, err := apitools.NewCollectionDataStream(ctx, config, s.CollectionID)
+	s.ctx, s.done = apitools.ContextWithAuth(s.Token, 1*time.Hour)
+	ds, err := apitools.NewCollectionDataStream(s.ctx, config, s.CollectionID)
 	if err != nil {
 		return fmt.Errorf("unable to open CollectionDataStream: %v", err)
 	}
@@ -45,6 +50,14 @@ func (s *SpanListener) Start() error {
 	return nil
 }
 
+// Shutdown the listener
+func (s *SpanListener) Shutdown() {
+	if s.done != nil {
+		s.done()
+		s.shutdownComplete.Wait()
+	}
+}
+
 // Measurements returns a chan apipb.CarrierModuleMeasurements
 func (s *SpanListener) Measurements() <-chan *apipb.CarrierModuleMeasurements {
 	return s.measurementCh
@@ -52,6 +65,9 @@ func (s *SpanListener) Measurements() <-chan *apipb.CarrierModuleMeasurements {
 
 func (s *SpanListener) readDataStream(ds apitools.DataStream) {
 	defer ds.Close()
+
+	// Signal that we have started
+	s.shutdownComplete.Add(1)
 
 	log.Printf("connected to Span")
 	for {
@@ -77,8 +93,14 @@ func (s *SpanListener) readDataStream(ds apitools.DataStream) {
 		if err != nil {
 			log.Fatalf("unable to unmarshal protobuffer: %v", err)
 		}
-		log.Printf("protobuffer %+v", &pb)
 
 		s.measurementCh <- &pb
+
+		if s.ctx.Err() == context.Canceled {
+			log.Printf("shutting down spanlistener")
+			close(s.measurementCh)
+			s.shutdownComplete.Done()
+			return
+		}
 	}
 }

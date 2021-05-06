@@ -2,7 +2,11 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/borud/spanlisten/pkg/spanlistener"
 )
@@ -25,6 +29,17 @@ func main() {
 		log.Fatalf("Unable to start SpanListener: %v", err)
 	}
 
+	// Handle Ctrl-C
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		fmt.Println("\r- Ctrl+C pressed in Terminal")
+		spanListener.Shutdown()
+		os.Exit(0)
+	}()
+
+	// Loop over measurements channel
 	for m := range spanListener.Measurements() {
 		log.Printf("measurement: %+v", m)
 	}

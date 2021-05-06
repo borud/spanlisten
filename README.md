@@ -245,3 +245,70 @@ func (s *SpanListener) Measurements() <-chan *apipb.CarrierModuleMeasurements {
 ```
 
 Talk a bit about channel length and about sizing channels.
+
+## Graceful shutdown
+
+Introducing the context object.  First we add it to the `SpanListener` struct.
+
+(Explain that we get to the sync.WaitGroup later.  Mention that WaitGroup are like CountdownLatch in Java)
+
+```go
+type SpanListener struct {
+	Token            string
+	CollectionID     string
+	measurementCh    chan *apipb.CarrierModuleMeasurements
+	ctx              context.Context
+	done             context.CancelFunc
+	shutdownComplete sync.WaitGroup
+```
+
+Then we capture it when making the context:
+
+```go
+s.ctx, s.done = apitools.ContextWithAuth(s.Token, 1*time.Hour)
+ds, err := apitools.NewCollectionDataStream(s.ctx, config, s.CollectionID)
+```
+
+make sure the `shutdownComplete` is set up
+
+```go
+s.shutdownComplete.Add(1)
+```
+
+Check for context cancellation
+
+```go
+s.measurementCh <- &pb
+if s.ctx.Err() == context.Canceled {
+	log.Printf("shutting down spanlistener")
+	close(s.measurementCh)
+	s.shutdownComplete.Done()
+	return
+}
+```
+
+Then add a shutdown
+
+```go
+// Shutdown the listener
+func (s *SpanListener) Shutdown() {
+	if s.done != nil {
+		s.done()
+		s.shutdownComplete.Wait()
+	}
+}
+```
+
+In `main.go` we need some way of triggering this so we hook into the Ctrl-C handling.
+
+```go
+// Handle Ctrl-C
+c := make(chan os.Signal)
+signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+go func() {
+	<-c
+	fmt.Println("\r- Ctrl+C pressed in Terminal")
+	spanListener.Shutdown()
+	os.Exit(0)
+}()
+```
