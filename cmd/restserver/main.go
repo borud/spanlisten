@@ -57,7 +57,7 @@ func jsonPostHandler(w http.ResponseWriter, r *http.Request) {
 	var data Data
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("error parsing JSON: %v", err), http.StatusBadRequest)
+		http.Error(w, "error parsing JSON", http.StatusBadRequest)
 		return
 	}
 
