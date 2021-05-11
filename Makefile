@@ -36,3 +36,12 @@ test:
 
 gen:
 	@buf generate
+
+count:
+	@gocloc --not-match-d pkg/apipb .
+
+init:
+	@go get -u google.golang.org/protobuf/cmd/protoc-gen-go \
+		github.com/bufbuild/buf/cmd/buf \
+		github.com/mgechev/revive \
+		github.com/hhatto/gocloc/cmd/gocloc
