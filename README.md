@@ -1,6 +1,21 @@
 # Spanlisten
 
-This project is a template project for a workshop on how to integrate with Span.  In this case for Autronica.
+This project is a template project for a workshop on how to integrate with Span.  In this case for Autronica.  The project is a step by step tutorial of a few select topics.  If you want to follow the steps make sure you check out the project and all its tags:
+
+    git clone git@github.com:borud/spanlisten.git
+    cd spanlisten
+    git fetch --all --tags
+
+This should make sure you have all the tags locally.  You can test this by issuing the command
+
+    git tag
+
+which will list all of the tags.
+
+### Browse the source
+
+A much easier way to navigate the code is simply to use the Githuib UI and jump between tags and browse the code there.  It can also be useful to navigate to the commit history and source diffs to see what was changed.
+
 
 ## Setup
 
