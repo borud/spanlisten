@@ -30,6 +30,20 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func formPostHandler(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("error parsing form: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// curl -X POST http://localhost:9090/login -H "Content-Type: application/x-www-form-urlencoded" -d "username=borud&password=secret"
+	// curl -X POST http://localhost:9090/login -d "username=borud&password=secret"
+	fmt.Fprint(w, "<h1>Form data</h1>\n")
+	fmt.Fprintf(w, "Username: %s<br>\n", r.FormValue("username"))
+	fmt.Fprintf(w, "Password: %s<br>\n", r.FormValue("password"))
+}
+
 func main() {
 	mux := http.NewServeMux()
 
@@ -39,6 +53,9 @@ func main() {
 
 	// Handle root with our indexHandler
 	mux.HandleFunc("/", indexHandler)
+
+	// Handle form post
+	mux.HandleFunc("/login", formPostHandler)
 
 	// Set up the server
 	server := http.Server{
